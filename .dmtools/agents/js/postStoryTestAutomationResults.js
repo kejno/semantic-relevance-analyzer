@@ -337,7 +337,18 @@ function performGitOperations(branchName, commitMessage, workingDir, testFilesPa
         }
 
         console.log('Staging test path:', addPath);
-        runInRepo('git add ' + addPath, workingDir);
+        // `git add <dir>/` fails with exit 128 ("pathspec did not match any
+        // files") when the directory was never created — a legitimate case
+        // when the Story has 0 linked Test Cases and the agent correctly
+        // wrote nothing to testFilesPath. Treat "nothing to stage" the same
+        // as "staged nothing" (fall through to the noNewCommit path below)
+        // instead of letting the exception abort the whole post-processing
+        // step and leave the ticket without a result.
+        try {
+            runInRepo('git add ' + addPath, workingDir);
+        } catch (addErr) {
+            console.warn('git add ' + addPath + ' failed (likely nothing to stage — path does not exist):', addErr);
+        }
 
         var stagedOutput = cleanCommandOutput(runInRepo('git diff --cached --stat', workingDir) || '');
         console.log('Staged changes:', stagedOutput || '(none)');

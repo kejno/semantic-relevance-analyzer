@@ -141,7 +141,14 @@ function commitAndPush(storyKey, config) {
     mergeMain(storyKey, config);
     runInRepo('git config user.name "' + config.git.authorName + '"', workingDir);
     runInRepo('git config user.email "' + config.git.authorEmail + '"', workingDir);
-    runInRepo('git add testing/', workingDir);
+    // `git add testing/` fails with exit 128 if that directory was never
+    // created (e.g. this project uses tests/e2e/ instead) — non-fatal,
+    // just means nothing to stage there.
+    try {
+        runInRepo('git add testing/', workingDir);
+    } catch (e) {
+        console.warn('git add testing/ failed (likely nothing to stage):', e);
+    }
 
     var statusOutput = cleanCommandOutput(runInRepo('git diff --cached --stat', workingDir) || '');
     if (statusOutput.trim()) {

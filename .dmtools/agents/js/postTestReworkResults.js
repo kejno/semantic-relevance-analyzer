@@ -259,7 +259,14 @@ function commitAndPush(ticketKey, passed, config, prIsDirty) {
 
     if (!mergeInProgress && prIsDirty) {
         // Commit any test fixes first so the working tree/index is clean for the merge.
-        cli_execute_command({ command: 'git add ' + testFilesPath });
+        // `git add <dir>` fails with exit 128 if testFilesPath was never
+        // created — treat "nothing to stage" as non-fatal rather than
+        // aborting the whole rework flow.
+        try {
+            cli_execute_command({ command: 'git add ' + testFilesPath });
+        } catch (e) {
+            console.warn('git add ' + testFilesPath + ' failed (likely nothing to stage):', e);
+        }
         commitIfNeeded(ticketKey, passed, config);
         console.log('PR is dirty — starting merge of origin/' + baseBranch);
         try {
@@ -270,7 +277,11 @@ function commitAndPush(ticketKey, passed, config, prIsDirty) {
     }
 
     // Stage test fixes and any resolved conflict files.
-    cli_execute_command({ command: 'git add ' + testFilesPath });
+    try {
+        cli_execute_command({ command: 'git add ' + testFilesPath });
+    } catch (e) {
+        console.warn('git add ' + testFilesPath + ' failed (likely nothing to stage):', e);
+    }
     stageUnmergedPaths(config);
 
     // Commit. If a merge is in progress this creates the merge commit.
