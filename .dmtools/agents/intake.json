@@ -8,6 +8,9 @@
     "cliCommands": [
       "./agents/scripts/run-agent.sh"
     ],
+    "envVariables": {
+      "CLAUDE_CODE_MAX_TURNS": "80"
+    },
     "outputType": "none",
     "ticketContextDepth": 0,
     "cleanupInputFolder": false,
