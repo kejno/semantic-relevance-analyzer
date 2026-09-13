@@ -15,7 +15,7 @@
     "skipAIProcessing": true,
     "alwaysPostComments": true,
     "envVariables": {
-      "CLI_ALLOWED_COMMANDS": "find,ls,cat,mkdir,bash,run-agent.sh,gradlew"
+      "CLI_ALLOWED_COMMANDS": "find,ls,cat,mkdir,bash,run-agent.sh,npm,npx,git"
     },
     "timerJSAction": "agents/js/timerAutoCommitAndSave.js",
     "timerIntervalSeconds": 300,

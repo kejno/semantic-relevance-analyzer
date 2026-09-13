@@ -106,6 +106,19 @@ run_claude_code() {
     if [ "${claude_cleanup_prompt_file}" = "true" ]; then
       rm -f "${claude_prompt_file}"
     fi
+
+    # A stale/committed .claude-session-id can point at a session the API no
+    # longer has (expired, or copied from another run's branch by an
+    # auto-commit step). --resume then fails immediately with "No
+    # conversation found" (0 turns, no real work done). Don't retry inline —
+    # just drop the dead pointer so this failure surfaces normally (ticket
+    # reset to Ready For Development, branch kept) and the next SM cycle's
+    # retry starts a genuinely fresh session instead of hitting the same
+    # dead resume again.
+    if [ "${claude_code_exit_code}" -ne 0 ] && grep -q "No conversation found with session ID" "${claude_code_log}" 2>/dev/null; then
+      echo "⚠️  Resumed session is gone (No conversation found) — removing stale .claude-session-id so the next retry starts fresh."
+      rm -f .claude-session-id
+    fi
   elif [ -f "${PROMPT_ARG}" ]; then
     echo "Running: claude --permission-mode bypassPermissions --output-format stream-json --verbose --model ${claude_code_model} --max-turns ${claude_code_max_turns} -p (prompt: ${PROMPT_BYTES} bytes via stdin)"
     echo ""

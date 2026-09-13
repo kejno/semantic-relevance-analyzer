@@ -106,7 +106,7 @@ jobs:
           AI_AGENT_PROVIDER: claude-code
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           CLAUDE_CODE_MODEL: claude-sonnet-4-6
-          CLAUDE_CODE_MAX_TURNS: '30'
+          CLAUDE_CODE_MAX_TURNS: '60'
 
           DMTOOLS_INTEGRATIONS: 'jira,github,ai,cli,file'
           ENCODED_CONFIG: ${{ inputs.encoded_config }}
