@@ -5,10 +5,13 @@ already has linked Test Case tickets. Your job is to process **all linked
 Test Cases in one bulk run**.
 
 This project uses **Playwright** (`tests/e2e/`, config in
-`playwright.config.ts`) — one existing spec file, `tests/e2e/resume.spec.ts`,
-covers language/theme/print/mobile behavior with `test.describe` blocks.
-There is no separate framework-agnostic `testing/` tree here; write tests
-directly against the app the way the existing spec does.
+`playwright.config.ts`). There is no separate framework-agnostic `testing/`
+tree here; write tests directly against the app using Playwright's built-in
+`test`/`expect`/`page` API with `test.describe` grouping. If `tests/e2e/`
+already contains spec files from earlier Stories, match their style; if this
+is the first spec file in the project, establish a clear, idiomatic
+Playwright style (real assertions against rendered output, role-based
+locators, no page-object layer unless genuinely needed).
 
 ## Workflow
 
@@ -22,8 +25,8 @@ directly against the app the way the existing spec does.
 3. For each linked Test Case:
    - Check if an automated test already exists at `tests/e2e/{TC_KEY}.spec.ts`.
    - If it exists, run it: `npx playwright test tests/e2e/{TC_KEY}.spec.ts`.
-   - If it is missing, write a new spec file for it, following the existing
-     style in `tests/e2e/resume.spec.ts` (Playwright's built-in
+   - If it is missing, write a new spec file for it, matching the style of
+     any existing files in `tests/e2e/` (Playwright's built-in
      `test`/`expect`/`page` API, `test.describe` grouping, real assertions
      against rendered output — no framework layers to reuse or build).
 4. Produce a single result JSON: `outputs/story_test_automation_result.json`.
