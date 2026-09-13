@@ -3,7 +3,7 @@ set -euo pipefail
 
 PROVIDERS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 TEST_ROOT="$(mktemp -d)"
-trap 'rm -rf "${TEST_ROOT}"' EXIT
+trap 'rm -rf "${TEST_ROOT}" /tmp/.claude-session-id-test-*' EXIT
 
 source "${PROVIDERS_DIR}/_common.sh"
 source "${PROVIDERS_DIR}/claude.sh"
@@ -101,8 +101,14 @@ BINEOF
     export CLAUDE_CODE_BASE_URL="https://example.com"
     export CAPTURED_STDIN_FILE="${case_dir}/captured.txt"
     export DMTOOLS_CLI_LOG_DIR="${case_dir}/logs"
+    # claude.sh resolves the session-id file to /tmp/.claude-session-id-${GITHUB_RUN_ID:-local}-${GITHUB_JOB:-job}
+    # (deliberately outside any repo working tree — see claude.sh for why).
+    # Pin unique values per case so parallel/sequential test cases don't
+    # collide on the same /tmp path.
+    export GITHUB_RUN_ID="test-${case_name}"
+    export GITHUB_JOB="provider"
     if [ "${seed_session_file}" = "yes" ]; then
-      echo "prev-session-id" > .claude-session-id
+      echo "prev-session-id" > "/tmp/.claude-session-id-${GITHUB_RUN_ID}-${GITHUB_JOB}"
     fi
     PROMPT_ARG="nonexistent-file"
     PROMPT="test prompt marker for resume notice test"

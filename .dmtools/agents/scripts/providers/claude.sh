@@ -62,12 +62,24 @@ run_claude_code() {
   local claude_code_exit_code=0
   local claude_code_log
   claude_code_log="$(new_agent_log_file "claude-code")"
-  # Session resume: if .claude-session-id exists from a previous run, continue that session.
+  # Session resume: if a session-id file exists from a previous run in this
+  # same job (e.g. saved by the timer before a timeout), continue that
+  # session. Deliberately kept OUTSIDE the repo working tree (/tmp, not
+  # .claude-session-id in cwd) — a path inside the repo gets swept up by
+  # timerAutoCommitAndSave's `git add -A` as an untracked file and committed
+  # to the ticket branch. On the next CI run (a fresh runner, fresh
+  # checkout), claude.sh would then find that committed file and try to
+  # --resume a session the Claude API no longer has (it never lived on this
+  # new runner, and/or has since expired), failing immediately with "No
+  # conversation found" instead of doing any work. Resuming only ever makes
+  # sense within the same job/runner anyway — across separate CI runs there
+  # is no guarantee the session is still alive.
+  local claude_session_id_file="/tmp/.claude-session-id-${GITHUB_RUN_ID:-local}-${GITHUB_JOB:-job}"
   local claude_resume_args=()
   local claude_is_resuming=false
-  if [ -f ".claude-session-id" ]; then
+  if [ -f "${claude_session_id_file}" ]; then
     local prev_session_id
-    prev_session_id="$(cat .claude-session-id | tr -d '[:space:]')"
+    prev_session_id="$(cat "${claude_session_id_file}" | tr -d '[:space:]')"
     if [ -n "${prev_session_id}" ]; then
       claude_resume_args=(--resume "${prev_session_id}")
       claude_is_resuming=true
@@ -107,17 +119,16 @@ run_claude_code() {
       rm -f "${claude_prompt_file}"
     fi
 
-    # A stale/committed .claude-session-id can point at a session the API no
-    # longer has (expired, or copied from another run's branch by an
-    # auto-commit step). --resume then fails immediately with "No
-    # conversation found" (0 turns, no real work done). Don't retry inline —
-    # just drop the dead pointer so this failure surfaces normally (ticket
-    # reset to Ready For Development, branch kept) and the next SM cycle's
-    # retry starts a genuinely fresh session instead of hitting the same
-    # dead resume again.
+    # A stale session-id file can point at a session the API no longer has
+    # (expired, or this is actually a fresh runner and the file is left over
+    # from something else entirely). --resume then fails immediately with
+    # "No conversation found" (0 turns, no real work done). Don't retry
+    # inline — just drop the dead pointer so this failure surfaces normally
+    # (ticket reset to Ready For Development) and the next attempt starts a
+    # genuinely fresh session instead of hitting the same dead resume again.
     if [ "${claude_code_exit_code}" -ne 0 ] && grep -q "No conversation found with session ID" "${claude_code_log}" 2>/dev/null; then
-      echo "⚠️  Resumed session is gone (No conversation found) — removing stale .claude-session-id so the next retry starts fresh."
-      rm -f .claude-session-id
+      echo "⚠️  Resumed session is gone (No conversation found) — removing stale session-id file so the next retry starts fresh."
+      rm -f "${claude_session_id_file}"
     fi
   elif [ -f "${PROMPT_ARG}" ]; then
     echo "Running: claude --permission-mode bypassPermissions --output-format stream-json --verbose --model ${claude_code_model} --max-turns ${claude_code_max_turns} -p (prompt: ${PROMPT_BYTES} bytes via stdin)"
@@ -172,11 +183,13 @@ run_claude_code() {
     echo "⚠️  Claude token usage could not be recorded (extractor exit ${usage_exit_code}); continuing with agent exit ${claude_code_exit_code}."
   fi
 
-  # Save session ID for the next run to resume from.
+  # Save session ID for a same-job retry (e.g. after a timer-triggered
+  # timeout) to resume from — see claude_session_id_file above for why this
+  # deliberately lives outside the repo.
   local saved_session_id
   saved_session_id="$(grep -o '"session_id":"[^"]*"' "${claude_code_log}" 2>/dev/null | head -1 | grep -o '"[^"]*"$' | tr -d '"')"
   if [ -n "${saved_session_id}" ]; then
-    echo "${saved_session_id}" > .claude-session-id
+    echo "${saved_session_id}" > "${claude_session_id_file}"
     echo "💾 Claude session saved: ${saved_session_id}"
   fi
 
