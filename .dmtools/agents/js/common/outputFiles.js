@@ -124,9 +124,23 @@ function readOutputFile(pathOrName, options) {
 function readOutputFileDetailed(pathOrName, options) {
     var candidates = buildOutputCandidates(pathOrName, options);
     for (var i = 0; i < candidates.length; i++) {
-        var content = readRaw(candidates[i]);
+        var candidate = candidates[i];
+        var content = readRaw(candidate);
         if (content) {
-            return { content: content, path: candidates[i] };
+            // A plain relative candidate (no leading "/") that succeeded
+            // here was read via file_read(), which resolves against
+            // JSRunner's cwd (.dmtools/) — NOT the repo root. Callers that
+            // hand this path to a shell command run through
+            // cli_execute_command (gh, git, cat, etc.), whose cwd is the
+            // repo root, so the same bare "outputs/x.md" string would miss
+            // there ("no such file or directory") even though file_read()
+            // just proved the file exists. Prefix it so it's valid for
+            // both readers, matching the absolute-repo-root candidates
+            // that are already unambiguous either way.
+            var shellSafePath = candidate.indexOf('/') === 0
+                ? candidate
+                : '.dmtools/' + candidate;
+            return { content: content, path: shellSafePath };
         }
     }
     return null;
