@@ -692,7 +692,16 @@ function postReviewToJira(ticketKey, reviewContent, reviewData, prUrl) {
         }
 
         // Add issue summary
-        const issueCounts = reviewData.issueCounts || { blocking: 0, important: 0, suggestions: 0 };
+        // reviewData.issueCounts (or individual fields within it) may be
+        // absent if the reviewing agent omitted them — default each field
+        // independently so the comment never renders the literal string
+        // "undefined" for a missing count.
+        const rawIssueCounts = reviewData.issueCounts || {};
+        const issueCounts = {
+            blocking: rawIssueCounts.blocking || 0,
+            important: rawIssueCounts.important || 0,
+            suggestions: rawIssueCounts.suggestions || 0
+        };
         comment += 'h3. Issue Summary\n';
         comment += '* 🚨 Blocking Issues: *' + issueCounts.blocking + '*\n';
         comment += '* ⚠️ Important Issues: *' + issueCounts.important + '*\n';
