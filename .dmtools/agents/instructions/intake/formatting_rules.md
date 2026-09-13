@@ -1,5 +1,11 @@
 # Intake output formatting rules
 
+## Language
+
+Write every `summary` and every description file (`story-N.md`, `epic-N.md`,
+`bug-N.md`) in Russian, regardless of the language the source Epic or
+comments are written in.
+
 ## `outputs/stories.json`
 
 - Must be a valid JSON array with no trailing commas.
