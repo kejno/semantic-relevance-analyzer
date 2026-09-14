@@ -126,7 +126,7 @@ jobs:
           # ticket, which this pass's JQL read already missed). Re-dispatch
           # ourselves once so the next pass picks it up. smAgent.js sets
           # needsAnotherPass:true in its JSON result when this happens.
-          if grep -q '"needsAnotherPass":true' sm-output.log; then
+          if grep -Eq '"needsAnotherPass":[[:space:]]*true' sm-output.log; then
             echo "Local status change needs another pass — re-dispatching SM Agent."
             gh workflow run sm-agent.yml --repo "${{ github.repository }}"
           fi
