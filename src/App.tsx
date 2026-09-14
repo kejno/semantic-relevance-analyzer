@@ -2,6 +2,7 @@ import { useState } from 'react'
 import './App.css'
 import { TextModePanel, type AnalysisResult } from './components/TextModePanel'
 import { UrlModePanel } from './components/UrlModePanel.tsx'
+import { PassageList } from './components/PassageList'
 
 type Tab = 'text' | 'url'
 
@@ -9,7 +10,7 @@ const TABS: Tab[] = ['text', 'url']
 
 function App() {
   const [activeTab, setActiveTab] = useState<Tab>('text')
-  const [_results, setResults] = useState<AnalysisResult[]>([])
+  const [results, setResults] = useState<AnalysisResult[]>([])
   const [analysisText, setAnalysisText] = useState<string | null>(null)
 
   const handleAnalysisComplete = (text: string) => {
@@ -84,7 +85,12 @@ function App() {
         className="py-8"
       >
         {activeTab === 'text' && (
-          <TextModePanel onAnalysisComplete={setResults} />
+          <>
+            <TextModePanel onAnalysisComplete={setResults} />
+            <div className="mt-6">
+              <PassageList passages={results} />
+            </div>
+          </>
         )}
         {activeTab === 'url' && (
           <>
@@ -98,6 +104,9 @@ function App() {
                     Страница не содержит читаемого текста. Попробуйте вставить содержимое вручную.
                   </p>
             )}
+            <div className="mt-6">
+              <PassageList passages={[]} />
+            </div>
           </>
         )}
       </div>
