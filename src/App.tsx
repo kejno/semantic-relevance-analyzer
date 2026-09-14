@@ -14,6 +14,7 @@ function App() {
     if (e.key === 'ArrowRight') next = TABS[(idx + 1) % TABS.length]
     if (e.key === 'ArrowLeft')  next = TABS[(idx - 1 + TABS.length) % TABS.length]
     if (next) {
+      e.preventDefault()
       setActiveTab(next)
       document.getElementById(`tab-${next}`)?.focus()
     }
@@ -31,7 +32,7 @@ function App() {
           type="button"
           role="tab"
           aria-selected={activeTab === 'text'}
-          aria-controls="panel-text"
+          aria-controls="tabpanel"
           tabIndex={activeTab === 'text' ? 0 : -1}
           onClick={() => setActiveTab('text')}
           onKeyDown={(e) => handleKeyDown(e, 'text')}
@@ -49,7 +50,7 @@ function App() {
           type="button"
           role="tab"
           aria-selected={activeTab === 'url'}
-          aria-controls="panel-url"
+          aria-controls="tabpanel"
           tabIndex={activeTab === 'url' ? 0 : -1}
           onClick={() => setActiveTab('url')}
           onKeyDown={(e) => handleKeyDown(e, 'url')}
@@ -66,7 +67,7 @@ function App() {
 
       <div
         role="tabpanel"
-        id={`panel-${activeTab}`}
+        id="tabpanel"
         aria-labelledby={`tab-${activeTab}`}
         className="py-8"
       >

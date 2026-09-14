@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach } from 'vitest'
-import { render, screen, cleanup } from '@testing-library/react'
+import { render, screen, cleanup, fireEvent, createEvent } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import App from '../src/App.tsx'
 
@@ -56,8 +56,9 @@ describe('App', () => {
     render(<App />)
     const textTab = screen.getByRole('tab', { name: 'Текстовый режим' })
     const urlTab = screen.getByRole('tab', { name: 'URL-режим' })
-    expect(textTab.getAttribute('aria-controls')).toBe('panel-text')
-    expect(urlTab.getAttribute('aria-controls')).toBe('panel-url')
+    expect(textTab.getAttribute('aria-controls')).toBe('tabpanel')
+    expect(urlTab.getAttribute('aria-controls')).toBe('tabpanel')
+    expect(document.getElementById('tabpanel')).not.toBeNull()
   })
 
   it('tabpanel has aria-labelledby pointing to the active tab', () => {
@@ -72,6 +73,24 @@ describe('App', () => {
     const urlTab = screen.getByRole('tab', { name: 'URL-режим' })
     expect(textTab.getAttribute('tabindex')).toBe('0')
     expect(urlTab.getAttribute('tabindex')).toBe('-1')
+  })
+
+  it('ArrowRight calls preventDefault to prevent page scroll', () => {
+    render(<App />)
+    const textTab = screen.getByRole('tab', { name: 'Текстовый режим' })
+    textTab.focus()
+    const event = createEvent.keyDown(textTab, { key: 'ArrowRight', bubbles: true })
+    fireEvent(textTab, event)
+    expect(event.defaultPrevented).toBe(true)
+  })
+
+  it('non-arrow key does not call preventDefault', () => {
+    render(<App />)
+    const textTab = screen.getByRole('tab', { name: 'Текстовый режим' })
+    textTab.focus()
+    const event = createEvent.keyDown(textTab, { key: 'Tab', bubbles: true })
+    fireEvent(textTab, event)
+    expect(event.defaultPrevented).toBe(false)
   })
 
   it('ArrowRight on active tab moves focus to next tab', async () => {
