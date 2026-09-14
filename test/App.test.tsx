@@ -67,6 +67,19 @@ describe('App', () => {
     expect(panel.getAttribute('aria-labelledby')).toBe('tab-text')
   })
 
+  it('tabpanel aria-labelledby updates when active tab changes', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+
+    const panel = screen.getByRole('tabpanel')
+    expect(panel.getAttribute('aria-labelledby')).toBe('tab-text')
+
+    const urlTab = screen.getByRole('tab', { name: 'URL-режим' })
+    await user.click(urlTab)
+
+    expect(panel.getAttribute('aria-labelledby')).toBe('tab-url')
+  })
+
   it('active tab has tabIndex 0 and inactive tabs have tabIndex -1', () => {
     render(<App />)
     const textTab = screen.getByRole('tab', { name: 'Текстовый режим' })
