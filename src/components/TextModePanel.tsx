@@ -24,6 +24,7 @@ export function TextModePanel({ onAnalysisComplete }: Props) {
   const [text, setText] = useState('')
   const [query, setQuery] = useState('')
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const workerRef = useRef<Worker | null>(null)
   const idRef = useRef(0)
 
@@ -43,6 +44,7 @@ export function TextModePanel({ onAnalysisComplete }: Props) {
 
   async function handleAnalyze() {
     setLoading(true)
+    setError(null)
     try {
       const worker = getWorker()
       const queryVector = await vectorizeText(worker, idRef.current++, query)
@@ -59,6 +61,8 @@ export function TextModePanel({ onAnalysisComplete }: Props) {
       }
 
       onAnalysisComplete(results)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Ошибка анализа')
     } finally {
       setLoading(false)
     }
@@ -75,6 +79,7 @@ export function TextModePanel({ onAnalysisComplete }: Props) {
   return (
     <div className="flex flex-col gap-4 text-left">
       <textarea
+        aria-label="Текст для анализа"
         placeholder="Вставьте текст для анализа"
         value={text}
         onChange={e => setText(e.target.value)}
@@ -84,6 +89,7 @@ export function TextModePanel({ onAnalysisComplete }: Props) {
       />
       <input
         type="text"
+        aria-label="Целевое ключевое слово или промпт"
         placeholder="Целевое ключевое слово или промпт"
         value={query}
         onChange={e => setQuery(e.target.value)}
@@ -107,7 +113,8 @@ export function TextModePanel({ onAnalysisComplete }: Props) {
         <button
           type="button"
           onClick={handleReset}
-          className="px-5 py-2 rounded text-sm font-medium transition-colors"
+          disabled={loading}
+          className="px-5 py-2 rounded border text-sm font-medium transition-colors"
           style={{ borderColor: 'var(--border)', color: 'var(--text)' }}
         >
           Сбросить
@@ -117,6 +124,9 @@ export function TextModePanel({ onAnalysisComplete }: Props) {
         <div role="status" aria-label="Загрузка" className="text-sm" style={{ color: 'var(--accent)' }}>
           Анализируем…
         </div>
+      )}
+      {error && (
+        <p role="alert" className="text-sm text-red-500">{error}</p>
       )}
     </div>
   )

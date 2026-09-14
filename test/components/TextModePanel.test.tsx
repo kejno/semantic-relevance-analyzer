@@ -182,4 +182,72 @@ describe('TextModePanel', () => {
     const results = onComplete.mock.calls[0][0] as AnalysisResult[]
     expect(results.length).toBeGreaterThanOrEqual(2)
   })
+
+  it('Сбросить button is disabled while analysis is loading', async () => {
+    const responseQueue: (() => void)[] = []
+
+    class PausedWorker {
+      private listeners: ((e: { data: unknown }) => void)[] = []
+      addEventListener(_: string, l: (e: { data: unknown }) => void) { this.listeners.push(l) }
+      removeEventListener(_: string, l: (e: { data: unknown }) => void) {
+        const i = this.listeners.indexOf(l)
+        if (i >= 0) this.listeners.splice(i, 1)
+      }
+      postMessage(data: { id: number }) {
+        const ls = [...this.listeners]
+        const { id } = data
+        responseQueue.push(() => ls.forEach(fn => fn({ data: { id, vector: [1, 0, 0] } })))
+      }
+      terminate() {}
+    }
+
+    vi.stubGlobal('Worker', PausedWorker)
+
+    render(<TextModePanel onAnalysisComplete={vi.fn()} />)
+
+    fireEvent.change(
+      screen.getByPlaceholderText('Вставьте текст для анализа'),
+      { target: { value: 'some text for analysis' } }
+    )
+    fireEvent.change(
+      screen.getByPlaceholderText('Целевое ключевое слово или промпт'),
+      { target: { value: 'keyword' } }
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Анализировать' }))
+
+    await act(async () => { await Promise.resolve() })
+
+    const resetBtn = screen.getByRole('button', { name: 'Сбросить' }) as HTMLButtonElement
+    expect(resetBtn.disabled).toBe(true)
+  })
+
+  it('shows error message when worker returns an error', async () => {
+    class ErrorWorker {
+      private listeners: ((e: { data: unknown }) => void)[] = []
+      addEventListener(_: string, l: (e: { data: unknown }) => void) { this.listeners.push(l) }
+      removeEventListener(_: string, l: (e: { data: unknown }) => void) {
+        const i = this.listeners.indexOf(l)
+        if (i >= 0) this.listeners.splice(i, 1)
+      }
+      postMessage(data: { id: number }) {
+        this.listeners.forEach(fn => fn({ data: { id: data.id, error: 'Model load failed' } }))
+      }
+      terminate() {}
+    }
+
+    vi.stubGlobal('Worker', ErrorWorker)
+
+    const user = userEvent.setup()
+    render(<TextModePanel onAnalysisComplete={vi.fn()} />)
+
+    await user.type(screen.getByPlaceholderText('Вставьте текст для анализа'), 'some text here')
+    await user.type(screen.getByPlaceholderText('Целевое ключевое слово или промпт'), 'keyword')
+    await user.click(screen.getByRole('button', { name: 'Анализировать' }))
+
+    await waitFor(() => expect(screen.queryByRole('alert')).not.toBeNull())
+
+    expect(screen.getByRole('alert').textContent).toContain('Model load failed')
+    expect(screen.queryByRole('status')).toBeNull()
+  })
 })

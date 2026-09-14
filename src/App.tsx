@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import './App.css'
 import { TextModePanel, type AnalysisResult } from './components/TextModePanel'
+import { UrlModePanel } from './components/UrlModePanel.tsx'
 
 type Tab = 'text' | 'url'
 
@@ -9,6 +10,15 @@ const TABS: Tab[] = ['text', 'url']
 function App() {
   const [activeTab, setActiveTab] = useState<Tab>('text')
   const [_results, setResults] = useState<AnalysisResult[]>([])
+  const [analysisText, setAnalysisText] = useState<string | null>(null)
+
+  const handleAnalysisComplete = (text: string) => {
+    setAnalysisText(text)
+  }
+
+  const handleReset = () => {
+    setAnalysisText(null)
+  }
 
   const handleKeyDown = (e: React.KeyboardEvent, current: Tab) => {
     const idx = TABS.indexOf(current)
@@ -77,7 +87,18 @@ function App() {
           <TextModePanel onAnalysisComplete={setResults} />
         )}
         {activeTab === 'url' && (
-          <p>URL-режим — coming soon</p>
+          <>
+            <UrlModePanel onAnalysisComplete={handleAnalysisComplete} onReset={handleReset} />
+            {analysisText !== null && (
+              analysisText.length > 0
+                ? <p className="mt-6 text-sm text-left" style={{ color: 'var(--text)' }}>
+                    Текст получен: {analysisText.length} символов
+                  </p>
+                : <p className="mt-6 text-sm text-left" style={{ color: 'var(--text)' }}>
+                    Страница не содержит читаемого текста. Попробуйте вставить содержимое вручную.
+                  </p>
+            )}
+          </>
         )}
       </div>
     </div>
