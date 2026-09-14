@@ -9,7 +9,8 @@ function vectorizeText(worker: Worker, id: number, text: string): Promise<number
       if (e.data.id !== id) return
       worker.removeEventListener('message', handler as EventListener)
       if (e.data.error) reject(new Error(e.data.error))
-      else resolve(e.data.vector!)
+      else if (e.data.vector !== undefined) resolve(e.data.vector)
+      else reject(new Error('Worker returned no vector'))
     }
     worker.addEventListener('message', handler as EventListener)
     worker.postMessage({ id, text })
@@ -71,6 +72,7 @@ export function TextModePanel({ onAnalysisComplete }: Props) {
   function handleReset() {
     setText('')
     setQuery('')
+    setError(null)
     onAnalysisComplete([])
   }
 
@@ -101,12 +103,8 @@ export function TextModePanel({ onAnalysisComplete }: Props) {
           type="button"
           onClick={() => void handleAnalyze()}
           disabled={!canAnalyze || loading}
-          className="px-5 py-2 rounded text-sm font-medium transition-colors"
-          style={{
-            background: canAnalyze && !loading ? 'var(--accent)' : 'var(--border)',
-            color: canAnalyze && !loading ? '#fff' : 'var(--text)',
-            cursor: canAnalyze && !loading ? 'pointer' : 'not-allowed',
-          }}
+          className="px-5 py-2 rounded text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          style={{ background: 'var(--accent)', color: '#fff' }}
         >
           Анализировать
         </button>

@@ -250,4 +250,30 @@ describe('TextModePanel', () => {
     expect(screen.getByRole('alert').textContent).toContain('Model load failed')
     expect(screen.queryByRole('status')).toBeNull()
   })
+
+  it('clicking Сбросить clears error state', async () => {
+    class ErrorWorker {
+      private listeners: ((e: { data: unknown }) => void)[] = []
+      addEventListener(_: string, l: (e: { data: unknown }) => void) { this.listeners.push(l) }
+      removeEventListener(_: string, l: (e: { data: unknown }) => void) {
+        const i = this.listeners.indexOf(l)
+        if (i >= 0) this.listeners.splice(i, 1)
+      }
+      postMessage(data: { id: number }) {
+        this.listeners.forEach(fn => fn({ data: { id: data.id, error: 'Model load failed' } }))
+      }
+      terminate() {}
+    }
+
+    vi.stubGlobal('Worker', ErrorWorker)
+    const user = userEvent.setup()
+    render(<TextModePanel onAnalysisComplete={vi.fn()} />)
+    await user.type(screen.getByPlaceholderText('Вставьте текст для анализа'), 'text')
+    await user.type(screen.getByPlaceholderText('Целевое ключевое слово или промпт'), 'query')
+    await user.click(screen.getByRole('button', { name: 'Анализировать' }))
+    await waitFor(() => expect(screen.queryByRole('alert')).not.toBeNull())
+
+    await user.click(screen.getByRole('button', { name: 'Сбросить' }))
+    expect(screen.queryByRole('alert')).toBeNull()
+  })
 })
