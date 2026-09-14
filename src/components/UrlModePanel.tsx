@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { extractText } from '../utils/extractText.ts'
 
 interface UrlModePanelProps {
@@ -24,19 +24,25 @@ export function UrlModePanel({ onAnalysisComplete, onReset }: UrlModePanelProps)
   const [loading, setLoading] = useState(false)
   const [showFallback, setShowFallback] = useState(false)
   const [manualText, setManualText] = useState('')
+  const abortRef = useRef<AbortController | null>(null)
 
   const handleLoad = async () => {
+    abortRef.current?.abort()
+    const controller = new AbortController()
+    abortRef.current = controller
+
     setLoading(true)
     setShowFallback(false)
     try {
-      const response = await fetch(url)
+      const response = await fetch(url, { signal: controller.signal })
       if (!response.ok) {
         setShowFallback(true)
       } else {
         const html = await response.text()
         onAnalysisComplete(extractText(html))
       }
-    } catch {
+    } catch (err) {
+      if (err instanceof DOMException && err.name === 'AbortError') return
       setShowFallback(true)
     } finally {
       setLoading(false)
@@ -48,6 +54,7 @@ export function UrlModePanel({ onAnalysisComplete, onReset }: UrlModePanelProps)
   }
 
   const handleReset = () => {
+    abortRef.current?.abort()
     setUrl('')
     setManualText('')
     setShowFallback(false)

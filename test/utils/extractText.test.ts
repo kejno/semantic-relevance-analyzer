@@ -31,4 +31,8 @@ describe('extractText', () => {
   it('returns empty string for script/style-only HTML', () => {
     expect(extractText('<script>var x=1</script><style>body{}</style>')).toBe('')
   })
+
+  it('strips <noscript> tags and their content', () => {
+    expect(extractText('<noscript><p>JS required</p></noscript><p>Content</p>')).toBe('Content')
+  })
 })

@@ -54,6 +54,7 @@ describe('UrlModePanel', () => {
       expect(screen.queryByRole('textbox', { name: 'HTML или текст страницы' })).not.toBeNull(),
     )
     expect(screen.getByRole('button', { name: 'Анализировать текст' })).toBeDefined()
+    expect(screen.getByRole('button', { name: 'Анализировать текст' })).toHaveProperty('disabled', true)
     expect(onAnalysisComplete).not.toHaveBeenCalled()
   })
 
@@ -123,5 +124,53 @@ describe('UrlModePanel', () => {
     await user.type(screen.getByRole('textbox', { name: 'URL страницы' }), 'example.com')
 
     expect(screen.getByRole('button', { name: 'Загрузить' })).toHaveProperty('disabled', true)
+  })
+
+  it('Анализировать текст is disabled when fallback textarea is empty', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')))
+    const user = userEvent.setup()
+    render(<UrlModePanel onAnalysisComplete={vi.fn()} onReset={vi.fn()} />)
+
+    await user.type(screen.getByRole('textbox', { name: 'URL страницы' }), 'https://example.com')
+    await user.click(screen.getByRole('button', { name: 'Загрузить' }))
+
+    await waitFor(() =>
+      expect(screen.queryByRole('textbox', { name: 'HTML или текст страницы' })).not.toBeNull(),
+    )
+
+    expect(screen.getByRole('button', { name: 'Анализировать текст' })).toHaveProperty('disabled', true)
+  })
+
+  it('Сбросить during loading aborts in-flight fetch and prevents state mutation', async () => {
+    let rejectFetch!: (err: Error) => void
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockImplementation((_url: string, opts?: { signal?: AbortSignal }) => {
+        return new Promise<Response>((_resolve, reject) => {
+          rejectFetch = reject
+          opts?.signal?.addEventListener('abort', () => {
+            reject(new DOMException('Aborted', 'AbortError'))
+          })
+        })
+      }),
+    )
+
+    const onAnalysisComplete = vi.fn()
+    const user = userEvent.setup()
+    render(<UrlModePanel onAnalysisComplete={onAnalysisComplete} onReset={vi.fn()} />)
+
+    await user.type(screen.getByRole('textbox', { name: 'URL страницы' }), 'https://example.com')
+    await user.click(screen.getByRole('button', { name: 'Загрузить' }))
+
+    await user.click(screen.getByRole('button', { name: 'Сбросить' }))
+
+    // Simulate stale network failure arriving after reset
+    rejectFetch(new TypeError('Network error'))
+
+    await new Promise(resolve => setTimeout(resolve, 50))
+
+    expect((screen.getByRole('textbox', { name: 'URL страницы' }) as HTMLInputElement).value).toBe('')
+    expect(screen.queryByRole('textbox', { name: 'HTML или текст страницы' })).toBeNull()
+    expect(onAnalysisComplete).not.toHaveBeenCalled()
   })
 })
