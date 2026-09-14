@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import './App.css'
+import { TextModePanel, type AnalysisResult } from './components/TextModePanel'
 
 type Tab = 'text' | 'url'
 
@@ -7,6 +8,7 @@ const TABS: Tab[] = ['text', 'url']
 
 function App() {
   const [activeTab, setActiveTab] = useState<Tab>('text')
+  const [_results, setResults] = useState<AnalysisResult[]>([])
 
   const handleKeyDown = (e: React.KeyboardEvent, current: Tab) => {
     const idx = TABS.indexOf(current)
@@ -72,7 +74,7 @@ function App() {
         className="py-8"
       >
         {activeTab === 'text' && (
-          <p>Текстовый режим — coming soon</p>
+          <TextModePanel onAnalysisComplete={setResults} />
         )}
         {activeTab === 'url' && (
           <p>URL-режим — coming soon</p>
