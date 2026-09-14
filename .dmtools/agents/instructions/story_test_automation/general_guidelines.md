@@ -41,11 +41,9 @@ locators, no page-object layer unless genuinely needed).
   the normal review flow.
 - An **access / credential / permission / infrastructure failure** — the
   test account cannot reach a required service, repository, secret, or
-  token — is **NOT a product failure**. Record that Test Case as `passed`
-  (this project's Jira workflow has no `Skipped` status, so `skipped`
-  would leave the ticket stuck in `To Do` forever and block the Story from
-  ever completing) and explain the blocker in the test file as a code
-  comment and in the tracker comment. Do **not** mark it `failed` — a
+  token — is **NOT a product failure**. Mark that Test Case as `skipped`,
+  explain the blocker in `failureSummary`, and keep the overall result as
+  `passed` if all other Test Cases passed. Do **not** mark it `failed` — a
   missing browser/network capability in CI is not a defect to fix.
 - If **every** linked Test Case is blocked by missing setup, set `overall`
   to `blocked_by_human` and produce `outputs/blocked.json`.
