@@ -4,11 +4,11 @@
     "claude-haiku-4-5-20251001",
     "claude-sonnet-4-6"
   ],
-  "input_other": 4325,
-  "input_cache_read": 589659,
-  "input_cache_creation": 24146,
-  "output": 3027,
-  "total_input": 618130,
-  "total_tokens": 621157,
-  "cost_usd": 0.37139970000000005
+  "input_other": 4341,
+  "input_cache_read": 1565713,
+  "input_cache_creation": 44358,
+  "output": 8241,
+  "total_input": 1614412,
+  "total_tokens": 1622653,
+  "cost_usd": 0.8637559
 }
