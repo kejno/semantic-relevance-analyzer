@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import './App.css'
+import { TextModePanel, type AnalysisResult } from './components/TextModePanel'
 import { UrlModePanel } from './components/UrlModePanel.tsx'
 
 type Tab = 'text' | 'url'
@@ -8,6 +9,7 @@ const TABS: Tab[] = ['text', 'url']
 
 function App() {
   const [activeTab, setActiveTab] = useState<Tab>('text')
+  const [_results, setResults] = useState<AnalysisResult[]>([])
   const [analysisText, setAnalysisText] = useState<string | null>(null)
 
   const handleAnalysisComplete = (text: string) => {
@@ -82,7 +84,7 @@ function App() {
         className="py-8"
       >
         {activeTab === 'text' && (
-          <p>Текстовый режим — coming soon</p>
+          <TextModePanel onAnalysisComplete={setResults} />
         )}
         {activeTab === 'url' && (
           <>
