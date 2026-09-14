@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import './App.css'
+import { UrlModePanel } from './components/UrlModePanel.tsx'
 
 type Tab = 'text' | 'url'
 
@@ -7,6 +8,11 @@ const TABS: Tab[] = ['text', 'url']
 
 function App() {
   const [activeTab, setActiveTab] = useState<Tab>('text')
+  const [analysisText, setAnalysisText] = useState<string | null>(null)
+
+  const handleAnalysisComplete = (text: string) => {
+    setAnalysisText(text || null)
+  }
 
   const handleKeyDown = (e: React.KeyboardEvent, current: Tab) => {
     const idx = TABS.indexOf(current)
@@ -75,7 +81,12 @@ function App() {
           <p>Текстовый режим — coming soon</p>
         )}
         {activeTab === 'url' && (
-          <p>URL-режим — coming soon</p>
+          <UrlModePanel onAnalysisComplete={handleAnalysisComplete} />
+        )}
+        {analysisText !== null && (
+          <p className="mt-6 text-sm text-left" style={{ color: 'var(--text)' }}>
+            Текст получен: {analysisText.length} символов
+          </p>
         )}
       </div>
     </div>
