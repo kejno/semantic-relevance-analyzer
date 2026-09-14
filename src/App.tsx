@@ -10,13 +10,18 @@ function App() {
 
   const handleKeyDown = (e: React.KeyboardEvent, current: Tab) => {
     const idx = TABS.indexOf(current)
-    if (e.key === 'ArrowRight') setActiveTab(TABS[(idx + 1) % TABS.length])
-    if (e.key === 'ArrowLeft')  setActiveTab(TABS[(idx - 1 + TABS.length) % TABS.length])
+    let next: Tab | undefined
+    if (e.key === 'ArrowRight') next = TABS[(idx + 1) % TABS.length]
+    if (e.key === 'ArrowLeft')  next = TABS[(idx - 1 + TABS.length) % TABS.length]
+    if (next) {
+      setActiveTab(next)
+      document.getElementById(`tab-${next}`)?.focus()
+    }
   }
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
-      <h1 className="text-3xl font-medium text-center mb-8" style={{ color: 'var(--text-h)' }}>
+      <h1 className="text-3xl font-medium text-center mb-8">
         Semantic Relevance Analyzer
       </h1>
 

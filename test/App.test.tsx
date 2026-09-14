@@ -82,6 +82,7 @@ describe('App', () => {
     await user.keyboard('{ArrowRight}')
     const urlTab = screen.getByRole('tab', { name: 'URL-режим' })
     expect(urlTab.getAttribute('aria-selected')).toBe('true')
+    expect(document.activeElement).toBe(urlTab)
   })
 
   it('ArrowLeft on first tab wraps to last tab', async () => {
@@ -92,5 +93,6 @@ describe('App', () => {
     await user.keyboard('{ArrowLeft}')
     const urlTab = screen.getByRole('tab', { name: 'URL-режим' })
     expect(urlTab.getAttribute('aria-selected')).toBe('true')
+    expect(document.activeElement).toBe(urlTab)
   })
 })
