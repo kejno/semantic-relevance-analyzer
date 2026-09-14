@@ -11,7 +11,7 @@ describe('UrlModePanel', () => {
   })
 
   it('renders URL input and Загрузить button', () => {
-    render(<UrlModePanel onAnalysisComplete={vi.fn()} />)
+    render(<UrlModePanel onAnalysisComplete={vi.fn()} onReset={vi.fn()} />)
     expect(screen.getByRole('textbox', { name: 'URL страницы' })).toBeDefined()
     expect(screen.getByRole('button', { name: 'Загрузить' })).toBeDefined()
     expect(screen.getByRole('button', { name: 'Сбросить' })).toBeDefined()
@@ -28,7 +28,7 @@ describe('UrlModePanel', () => {
 
     const onAnalysisComplete = vi.fn()
     const user = userEvent.setup()
-    render(<UrlModePanel onAnalysisComplete={onAnalysisComplete} />)
+    render(<UrlModePanel onAnalysisComplete={onAnalysisComplete} onReset={vi.fn()} />)
 
     await user.type(screen.getByRole('textbox', { name: 'URL страницы' }), 'https://example.com')
     await user.click(screen.getByRole('button', { name: 'Загрузить' }))
@@ -45,7 +45,7 @@ describe('UrlModePanel', () => {
 
     const onAnalysisComplete = vi.fn()
     const user = userEvent.setup()
-    render(<UrlModePanel onAnalysisComplete={onAnalysisComplete} />)
+    render(<UrlModePanel onAnalysisComplete={onAnalysisComplete} onReset={vi.fn()} />)
 
     await user.type(screen.getByRole('textbox', { name: 'URL страницы' }), 'https://example.com')
     await user.click(screen.getByRole('button', { name: 'Загрузить' }))
@@ -62,7 +62,7 @@ describe('UrlModePanel', () => {
 
     const onAnalysisComplete = vi.fn()
     const user = userEvent.setup()
-    render(<UrlModePanel onAnalysisComplete={onAnalysisComplete} />)
+    render(<UrlModePanel onAnalysisComplete={onAnalysisComplete} onReset={vi.fn()} />)
 
     await user.type(screen.getByRole('textbox', { name: 'URL страницы' }), 'https://example.com')
     await user.click(screen.getByRole('button', { name: 'Загрузить' }))
@@ -81,11 +81,12 @@ describe('UrlModePanel', () => {
     expect(onAnalysisComplete.mock.calls[0][0]).toContain('Pasted content')
   })
 
-  it('Сбросить clears URL input, hides fallback, and textarea', async () => {
+  it('Сбросить clears URL input, hides fallback textarea, and calls onReset', async () => {
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')))
 
+    const onReset = vi.fn()
     const user = userEvent.setup()
-    render(<UrlModePanel onAnalysisComplete={vi.fn()} />)
+    render(<UrlModePanel onAnalysisComplete={vi.fn()} onReset={onReset} />)
 
     await user.type(screen.getByRole('textbox', { name: 'URL страницы' }), 'https://example.com')
     await user.click(screen.getByRole('button', { name: 'Загрузить' }))
@@ -98,13 +99,14 @@ describe('UrlModePanel', () => {
 
     expect((screen.getByRole('textbox', { name: 'URL страницы' }) as HTMLInputElement).value).toBe('')
     expect(screen.queryByRole('textbox', { name: 'HTML или текст страницы' })).toBeNull()
+    expect(onReset).toHaveBeenCalledOnce()
   })
 
   it('fetch non-2xx response also shows fallback', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 403, text: vi.fn() }))
 
     const user = userEvent.setup()
-    render(<UrlModePanel onAnalysisComplete={vi.fn()} />)
+    render(<UrlModePanel onAnalysisComplete={vi.fn()} onReset={vi.fn()} />)
 
     await user.type(screen.getByRole('textbox', { name: 'URL страницы' }), 'https://example.com')
     await user.click(screen.getByRole('button', { name: 'Загрузить' }))
@@ -112,5 +114,14 @@ describe('UrlModePanel', () => {
     await waitFor(() =>
       expect(screen.queryByRole('textbox', { name: 'HTML или текст страницы' })).not.toBeNull(),
     )
+  })
+
+  it('Загрузить is disabled for a URL without http/https scheme', async () => {
+    const user = userEvent.setup()
+    render(<UrlModePanel onAnalysisComplete={vi.fn()} onReset={vi.fn()} />)
+
+    await user.type(screen.getByRole('textbox', { name: 'URL страницы' }), 'example.com')
+
+    expect(screen.getByRole('button', { name: 'Загрузить' })).toHaveProperty('disabled', true)
   })
 })

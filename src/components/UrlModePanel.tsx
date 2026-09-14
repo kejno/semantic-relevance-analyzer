@@ -3,13 +3,23 @@ import { extractText } from '../utils/extractText.ts'
 
 interface UrlModePanelProps {
   onAnalysisComplete: (text: string) => void
+  onReset: () => void
+}
+
+function isValidHttpUrl(value: string): boolean {
+  try {
+    const { protocol } = new URL(value)
+    return protocol === 'http:' || protocol === 'https:'
+  } catch {
+    return false
+  }
 }
 
 const FALLBACK_MESSAGE =
   'Страница недоступна напрямую из браузера — это ожидаемое поведение для большинства сайтов. ' +
   'Скопируйте содержимое страницы и вставьте его ниже.'
 
-export function UrlModePanel({ onAnalysisComplete }: UrlModePanelProps) {
+export function UrlModePanel({ onAnalysisComplete, onReset }: UrlModePanelProps) {
   const [url, setUrl] = useState('')
   const [loading, setLoading] = useState(false)
   const [showFallback, setShowFallback] = useState(false)
@@ -42,6 +52,7 @@ export function UrlModePanel({ onAnalysisComplete }: UrlModePanelProps) {
     setManualText('')
     setShowFallback(false)
     setLoading(false)
+    onReset()
   }
 
   return (
@@ -59,7 +70,7 @@ export function UrlModePanel({ onAnalysisComplete }: UrlModePanelProps) {
         <button
           type="button"
           onClick={handleLoad}
-          disabled={loading || !url.trim()}
+          disabled={loading || !url.trim() || !isValidHttpUrl(url)}
           className="px-4 py-2 rounded-md text-sm font-medium transition-colors disabled:opacity-50"
           style={{ background: 'var(--accent)', color: '#fff' }}
         >

@@ -11,7 +11,11 @@ function App() {
   const [analysisText, setAnalysisText] = useState<string | null>(null)
 
   const handleAnalysisComplete = (text: string) => {
-    setAnalysisText(text || null)
+    setAnalysisText(text)
+  }
+
+  const handleReset = () => {
+    setAnalysisText(null)
   }
 
   const handleKeyDown = (e: React.KeyboardEvent, current: Tab) => {
@@ -81,12 +85,18 @@ function App() {
           <p>Текстовый режим — coming soon</p>
         )}
         {activeTab === 'url' && (
-          <UrlModePanel onAnalysisComplete={handleAnalysisComplete} />
-        )}
-        {analysisText !== null && (
-          <p className="mt-6 text-sm text-left" style={{ color: 'var(--text)' }}>
-            Текст получен: {analysisText.length} символов
-          </p>
+          <>
+            <UrlModePanel onAnalysisComplete={handleAnalysisComplete} onReset={handleReset} />
+            {analysisText !== null && (
+              analysisText.length > 0
+                ? <p className="mt-6 text-sm text-left" style={{ color: 'var(--text)' }}>
+                    Текст получен: {analysisText.length} символов
+                  </p>
+                : <p className="mt-6 text-sm text-left" style={{ color: 'var(--text)' }}>
+                    Страница не содержит читаемого текста. Попробуйте вставить содержимое вручную.
+                  </p>
+            )}
+          </>
         )}
       </div>
     </div>
