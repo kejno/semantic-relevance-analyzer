@@ -3,8 +3,16 @@ import './App.css'
 
 type Tab = 'text' | 'url'
 
+const TABS: Tab[] = ['text', 'url']
+
 function App() {
   const [activeTab, setActiveTab] = useState<Tab>('text')
+
+  const handleKeyDown = (e: React.KeyboardEvent, current: Tab) => {
+    const idx = TABS.indexOf(current)
+    if (e.key === 'ArrowRight') setActiveTab(TABS[(idx + 1) % TABS.length])
+    if (e.key === 'ArrowLeft')  setActiveTab(TABS[(idx - 1 + TABS.length) % TABS.length])
+  }
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
@@ -14,9 +22,14 @@ function App() {
 
       <div role="tablist" className="flex border-b" style={{ borderColor: 'var(--border)' }}>
         <button
+          id="tab-text"
+          type="button"
           role="tab"
           aria-selected={activeTab === 'text'}
+          aria-controls="panel-text"
+          tabIndex={activeTab === 'text' ? 0 : -1}
           onClick={() => setActiveTab('text')}
+          onKeyDown={(e) => handleKeyDown(e, 'text')}
           className={[
             'px-6 py-3 text-sm font-medium transition-colors',
             activeTab === 'text'
@@ -27,9 +40,14 @@ function App() {
           Текстовый режим
         </button>
         <button
+          id="tab-url"
+          type="button"
           role="tab"
           aria-selected={activeTab === 'url'}
+          aria-controls="panel-url"
+          tabIndex={activeTab === 'url' ? 0 : -1}
           onClick={() => setActiveTab('url')}
+          onKeyDown={(e) => handleKeyDown(e, 'url')}
           className={[
             'px-6 py-3 text-sm font-medium transition-colors',
             activeTab === 'url'
@@ -41,12 +59,17 @@ function App() {
         </button>
       </div>
 
-      <div role="tabpanel" className="py-8">
+      <div
+        role="tabpanel"
+        id={`panel-${activeTab}`}
+        aria-labelledby={`tab-${activeTab}`}
+        className="py-8"
+      >
         {activeTab === 'text' && (
-          <p style={{ color: 'var(--text)' }}>Текстовый режим — coming soon</p>
+          <p>Текстовый режим — coming soon</p>
         )}
         {activeTab === 'url' && (
-          <p style={{ color: 'var(--text)' }}>URL-режим — coming soon</p>
+          <p>URL-режим — coming soon</p>
         )}
       </div>
     </div>
