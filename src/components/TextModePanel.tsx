@@ -86,8 +86,10 @@ export function TextModePanel({ onAnalysisComplete }: Props) {
         value={text}
         onChange={e => setText(e.target.value)}
         rows={8}
-        className="w-full rounded border p-3 text-sm resize-y"
+        className="w-full rounded-sm border px-3 py-2.5 text-sm resize-y transition-colors focus:outline-none"
         style={{ borderColor: 'var(--border)', background: 'var(--bg)', color: 'var(--text-h)' }}
+        onFocus={e => { e.target.style.borderColor = 'var(--accent)' }}
+        onBlur={e => { e.target.style.borderColor = 'var(--border)' }}
       />
       <input
         type="text"
@@ -95,16 +97,18 @@ export function TextModePanel({ onAnalysisComplete }: Props) {
         placeholder="Целевое ключевое слово или промпт"
         value={query}
         onChange={e => setQuery(e.target.value)}
-        className="w-full rounded border p-3 text-sm"
+        className="w-full rounded-sm border px-3 py-2.5 text-sm transition-colors focus:outline-none"
         style={{ borderColor: 'var(--border)', background: 'var(--bg)', color: 'var(--text-h)' }}
+        onFocus={e => { e.target.style.borderColor = 'var(--accent)' }}
+        onBlur={e => { e.target.style.borderColor = 'var(--border)' }}
       />
-      <div className="flex gap-3">
+      <div className="flex items-center gap-4">
         <button
           type="button"
           onClick={() => void handleAnalyze()}
           disabled={!canAnalyze || loading}
-          className="px-5 py-2 rounded text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          style={{ background: 'var(--accent)', color: '#fff' }}
+          className="px-5 py-2.5 rounded-sm text-sm font-medium transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
+          style={{ background: 'var(--accent)', color: 'var(--bg)' }}
         >
           Анализировать
         </button>
@@ -112,19 +116,19 @@ export function TextModePanel({ onAnalysisComplete }: Props) {
           type="button"
           onClick={handleReset}
           disabled={loading}
-          className="px-5 py-2 rounded border text-sm font-medium transition-colors"
-          style={{ borderColor: 'var(--border)', color: 'var(--text)' }}
+          className="text-sm font-medium transition-colors disabled:opacity-40"
+          style={{ color: 'var(--text)' }}
         >
           Сбросить
         </button>
+        {loading && (
+          <span role="status" aria-label="Загрузка" className="text-sm" style={{ color: 'var(--text)' }}>
+            Анализируем…
+          </span>
+        )}
       </div>
-      {loading && (
-        <div role="status" aria-label="Загрузка" className="text-sm" style={{ color: 'var(--accent)' }}>
-          Анализируем…
-        </div>
-      )}
       {error && (
-        <p role="alert" className="text-sm text-red-500">{error}</p>
+        <p role="alert" className="text-sm" style={{ color: '#b3492f' }}>{error}</p>
       )}
     </div>
   )

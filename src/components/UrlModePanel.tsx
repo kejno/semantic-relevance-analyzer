@@ -71,23 +71,25 @@ export function UrlModePanel({ onAnalysisComplete, onReset }: UrlModePanelProps)
           value={url}
           onChange={e => setUrl(e.target.value)}
           placeholder="https://example.com"
-          className="flex-1 px-3 py-2 border rounded-md text-sm"
+          className="flex-1 px-3 py-2.5 border rounded-sm text-sm transition-colors focus:outline-none"
           style={{ borderColor: 'var(--border)', background: 'var(--bg)', color: 'var(--text-h)' }}
+          onFocus={e => { e.target.style.borderColor = 'var(--accent)' }}
+          onBlur={e => { e.target.style.borderColor = 'var(--border)' }}
         />
         <button
           type="button"
           onClick={handleLoad}
           disabled={loading || !url.trim() || !isValidHttpUrl(url)}
-          className="px-4 py-2 rounded-md text-sm font-medium transition-colors disabled:opacity-50"
-          style={{ background: 'var(--accent)', color: '#fff' }}
+          className="px-4 py-2.5 rounded-sm text-sm font-medium transition-opacity disabled:opacity-40"
+          style={{ background: 'var(--accent)', color: 'var(--bg)' }}
         >
           {loading ? 'Загружается…' : 'Загрузить'}
         </button>
         <button
           type="button"
           onClick={handleReset}
-          className="px-4 py-2 rounded-md text-sm font-medium transition-colors"
-          style={{ border: '1px solid var(--border)', color: 'var(--text)' }}
+          className="px-2 text-sm font-medium transition-colors"
+          style={{ color: 'var(--text)' }}
         >
           Сбросить
         </button>
@@ -104,15 +106,17 @@ export function UrlModePanel({ onAnalysisComplete, onReset }: UrlModePanelProps)
             onChange={e => setManualText(e.target.value)}
             placeholder="Вставьте HTML или текст страницы"
             rows={8}
-            className="w-full px-3 py-2 border rounded-md text-sm font-mono resize-y"
-            style={{ borderColor: 'var(--border)', background: 'var(--bg)', color: 'var(--text-h)' }}
+            className="w-full px-3 py-2.5 border rounded-sm text-sm resize-y transition-colors focus:outline-none"
+            style={{ borderColor: 'var(--border)', background: 'var(--bg)', color: 'var(--text-h)', fontFamily: 'var(--mono)' }}
+            onFocus={e => { e.target.style.borderColor = 'var(--accent)' }}
+            onBlur={e => { e.target.style.borderColor = 'var(--border)' }}
           />
           <button
             type="button"
             onClick={handleAnalyzeManual}
             disabled={!manualText.trim()}
-            className="self-start px-4 py-2 rounded-md text-sm font-medium transition-colors disabled:opacity-50"
-            style={{ background: 'var(--accent)', color: '#fff' }}
+            className="self-start px-4 py-2.5 rounded-sm text-sm font-medium transition-opacity disabled:opacity-40"
+            style={{ background: 'var(--accent)', color: 'var(--bg)' }}
           >
             Анализировать текст
           </button>

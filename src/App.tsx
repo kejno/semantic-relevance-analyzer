@@ -2,24 +2,46 @@ import { useState } from 'react'
 import './App.css'
 import { TextModePanel, type AnalysisResult } from './components/TextModePanel'
 import { UrlModePanel } from './components/UrlModePanel.tsx'
+import { AnalysisPrompt } from './components/AnalysisPrompt'
 import { PassageList } from './components/PassageList'
 import { ContentFlowChart } from './components/ContentFlowChart'
+import { useSemanticAnalysis } from './hooks/useSemanticAnalysis'
 
 type Tab = 'text' | 'url'
 
 const TABS: Tab[] = ['text', 'url']
 
+function ResultsSection({ passages }: { passages: AnalysisResult[] }) {
+  if (passages.length === 0) return <PassageList passages={passages} />
+  return (
+    <div className="flex flex-col gap-8">
+      <ContentFlowChart passages={passages} />
+      <PassageList passages={passages} />
+    </div>
+  )
+}
+
 function App() {
   const [activeTab, setActiveTab] = useState<Tab>('text')
   const [results, setResults] = useState<AnalysisResult[]>([])
   const [analysisText, setAnalysisText] = useState<string | null>(null)
+  const [urlResults, setUrlResults] = useState<AnalysisResult[]>([])
+  const urlAnalysis = useSemanticAnalysis()
 
   const handleAnalysisComplete = (text: string) => {
     setAnalysisText(text)
+    setUrlResults([])
   }
 
   const handleReset = () => {
     setAnalysisText(null)
+    setUrlResults([])
+  }
+
+  const handleUrlAnalyze = async (query: string) => {
+    if (!analysisText) return
+    const analysisResults = await urlAnalysis.analyze(analysisText, query)
+    setUrlResults(analysisResults)
   }
 
   const handleKeyDown = (e: React.KeyboardEvent, current: Tab) => {
@@ -35,12 +57,13 @@ function App() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
-      <h1 className="text-3xl font-medium text-center mb-8">
-        Semantic Relevance Analyzer
-      </h1>
+    <div className="flex flex-col gap-2">
+      <h1>Semantic Relevance Analyzer</h1>
+      <p className="text-sm" style={{ color: 'var(--text)' }}>
+        Измерьте, насколько каждый фрагмент текста отвечает на целевой запрос.
+      </p>
 
-      <div role="tablist" className="flex border-b" style={{ borderColor: 'var(--border)' }}>
+      <div role="tablist" className="flex gap-1 mt-8 border-b" style={{ borderColor: 'var(--border)' }}>
         <button
           id="tab-text"
           type="button"
@@ -51,10 +74,8 @@ function App() {
           onClick={() => setActiveTab('text')}
           onKeyDown={(e) => handleKeyDown(e, 'text')}
           className={[
-            'px-6 py-3 text-sm font-medium transition-colors',
-            activeTab === 'text'
-              ? 'border-b-2 active-tab'
-              : 'inactive-tab',
+            'px-1 py-3 mr-6 text-sm font-medium border-b-2 transition-colors',
+            activeTab === 'text' ? 'active-tab' : 'inactive-tab',
           ].join(' ')}
         >
           Текстовый режим
@@ -69,10 +90,8 @@ function App() {
           onClick={() => setActiveTab('url')}
           onKeyDown={(e) => handleKeyDown(e, 'url')}
           className={[
-            'px-6 py-3 text-sm font-medium transition-colors',
-            activeTab === 'url'
-              ? 'border-b-2 active-tab'
-              : 'inactive-tab',
+            'px-1 py-3 text-sm font-medium border-b-2 transition-colors',
+            activeTab === 'url' ? 'active-tab' : 'inactive-tab',
           ].join(' ')}
         >
           URL-режим
@@ -83,15 +102,12 @@ function App() {
         role="tabpanel"
         id="tabpanel"
         aria-labelledby={`tab-${activeTab}`}
-        className="py-8"
+        className="pt-8 flex flex-col gap-8"
       >
         {activeTab === 'text' && (
           <>
             <TextModePanel onAnalysisComplete={setResults} />
-            <div className="mt-6">
-              <ContentFlowChart passages={results} />
-              <PassageList passages={results} />
-            </div>
+            <ResultsSection passages={results} />
           </>
         )}
         {activeTab === 'url' && (
@@ -99,16 +115,21 @@ function App() {
             <UrlModePanel onAnalysisComplete={handleAnalysisComplete} onReset={handleReset} />
             {analysisText !== null && (
               analysisText.length > 0
-                ? <p className="mt-6 text-sm text-left" style={{ color: 'var(--text)' }}>
-                    Текст получен: {analysisText.length} символов
-                  </p>
-                : <p className="mt-6 text-sm text-left" style={{ color: 'var(--text)' }}>
+                ? <div className="flex flex-col gap-4">
+                    <p className="text-sm" style={{ color: 'var(--text)' }}>
+                      Текст получен — {analysisText.length.toLocaleString('ru-RU')} символов
+                    </p>
+                    <AnalysisPrompt
+                      onAnalyze={query => void handleUrlAnalyze(query)}
+                      loading={urlAnalysis.loading}
+                      error={urlAnalysis.error}
+                    />
+                  </div>
+                : <p className="text-sm" style={{ color: 'var(--text)' }}>
                     Страница не содержит читаемого текста. Попробуйте вставить содержимое вручную.
                   </p>
             )}
-            <div className="mt-6">
-              <PassageList passages={[]} />
-            </div>
+            <ResultsSection passages={urlResults} />
           </>
         )}
       </div>

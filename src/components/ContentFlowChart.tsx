@@ -31,18 +31,26 @@ export function ContentFlowChart({ passages }: ContentFlowChartProps) {
 
   return (
     <div>
-      <BarChart width={600} height={200} data={data}>
+      <BarChart width={648} height={220} data={data} margin={{ top: 8, right: 8, bottom: 20, left: 16 }}>
         <XAxis
           dataKey="name"
-          label={{ value: 'Пассаж', position: 'insideBottom', offset: -5 }}
+          label={{ value: 'Пассаж', position: 'insideBottom', offset: -12, fontSize: 12, fill: 'var(--text)' }}
+          tick={{ fontSize: 12, fill: 'var(--text)' }}
+          axisLine={{ stroke: 'var(--border)' }}
+          tickLine={false}
         />
         <YAxis
           domain={[0, 1]}
-          label={{ value: 'Релевантность', angle: -90, position: 'insideLeft' }}
+          label={{ value: 'Релевантность', angle: -90, position: 'insideLeft', dx: -16, fontSize: 12, fill: 'var(--text)' }}
+          tickFormatter={v => `${Math.round(v * 100)}%`}
+          tick={{ fontSize: 12, fill: 'var(--text)' }}
+          axisLine={false}
+          tickLine={false}
+          width={80}
         />
-        <Bar dataKey="score" isAnimationActive={false} onClick={handleBarClick}>
+        <Bar dataKey="score" isAnimationActive={false} onClick={handleBarClick} radius={[3, 3, 0, 0]} maxBarSize={28}>
           {data.map((entry, index) => (
-            <Cell key={index} fill={getBarColor(entry.score)} />
+            <Cell key={index} fill={getBarColor(entry.score)} className="cursor-pointer" />
           ))}
         </Bar>
       </BarChart>

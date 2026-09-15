@@ -1,4 +1,6 @@
-import { pipeline, type FeatureExtractionPipeline } from '@xenova/transformers'
+import { pipeline, env, type FeatureExtractionPipeline } from '@xenova/transformers'
+
+env.allowLocalModels = false
 
 let extractor: FeatureExtractionPipeline | null = null
 

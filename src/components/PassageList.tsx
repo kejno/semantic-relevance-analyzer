@@ -9,12 +9,6 @@ function getBadgeColor(score: number): BadgeColor {
   return 'red'
 }
 
-const BADGE_CLASSES: Record<BadgeColor, string> = {
-  green: 'bg-green-100 text-green-800',
-  yellow: 'bg-yellow-100 text-yellow-800',
-  red: 'bg-red-100 text-red-800',
-}
-
 interface PassageCardProps {
   text: string
   score: number
@@ -23,19 +17,29 @@ interface PassageCardProps {
 
 function PassageCard({ text, score, index }: PassageCardProps) {
   const color = getBadgeColor(score)
+  const pct = Math.round(score * 100)
   return (
     <div
       data-passage-id={index}
-      className="flex flex-col gap-2 rounded border p-4"
+      className="flex flex-col gap-3 py-4 text-left border-t"
       style={{ borderColor: 'var(--border)' }}
     >
-      <p className="text-sm" style={{ color: 'var(--text-h)' }}>{text}</p>
-      <span
-        className={`self-start px-2 py-0.5 rounded text-xs font-semibold ${BADGE_CLASSES[color]}`}
-        data-color={color}
-      >
-        {Math.round(score * 100)}%
-      </span>
+      <div className="flex items-baseline gap-3">
+        <span
+          className="font-serif tabular-nums text-lg shrink-0"
+          style={{ fontFamily: 'var(--serif)', color: 'var(--text-h)', minWidth: '3ch' }}
+          data-color={color}
+        >
+          {pct}%
+        </span>
+        <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: 'var(--surface)' }}>
+          <div
+            className="h-full rounded-full"
+            style={{ width: `${pct}%`, background: 'var(--accent)', opacity: 0.35 + (score * 0.65) }}
+          />
+        </div>
+      </div>
+      <p className="text-sm" style={{ color: 'var(--text)' }}>{text}</p>
     </div>
   )
 }
@@ -47,13 +51,13 @@ export interface PassageListProps {
 export function PassageList({ passages }: PassageListProps) {
   if (passages.length === 0) {
     return (
-      <p className="text-sm text-center" style={{ color: 'var(--text)' }}>
+      <p className="text-sm" style={{ color: 'var(--text)' }}>
         Введите текст и целевой запрос для анализа
       </p>
     )
   }
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col">
       {passages.map((p, i) => (
         <PassageCard key={i} text={p.text} score={p.score} index={i} />
       ))}

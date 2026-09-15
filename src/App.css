@@ -1,10 +1,11 @@
 .active-tab {
-  color: var(--accent);
+  color: var(--text-h);
   border-bottom-color: var(--accent);
 }
 
 .inactive-tab {
   color: var(--text);
+  border-bottom-color: transparent;
 }
 
 .inactive-tab:hover {
