@@ -37,7 +37,7 @@ describe('ContentFlowChart', () => {
       document.body.appendChild(targetEl)
 
       const { container } = render(<ContentFlowChart passages={passages} />)
-      const greenBar = container.querySelector('rect[fill="#22c55e"]')
+      const greenBar = container.querySelector('path[fill="#22c55e"]')
       expect(greenBar).not.toBeNull()
       fireEvent.click(greenBar!)
 

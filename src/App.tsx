@@ -3,6 +3,7 @@ import './App.css'
 import { TextModePanel, type AnalysisResult } from './components/TextModePanel'
 import { UrlModePanel } from './components/UrlModePanel.tsx'
 import { PassageList } from './components/PassageList'
+import { ContentFlowChart } from './components/ContentFlowChart'
 
 type Tab = 'text' | 'url'
 
@@ -88,6 +89,7 @@ function App() {
           <>
             <TextModePanel onAnalysisComplete={setResults} />
             <div className="mt-6">
+              <ContentFlowChart passages={results} />
               <PassageList passages={results} />
             </div>
           </>
