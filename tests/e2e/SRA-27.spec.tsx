@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { render, screen, cleanup } from '@testing-library/react'
+import { render, screen, cleanup, fireEvent, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { TextModePanel } from '../../src/components/TextModePanel'
 
@@ -39,11 +39,45 @@ describe('SRA-27: TextModePanel Reset button — clears inputs and resets result
   })
 
   it('clicking Сбросить calls onAnalysisComplete with an empty array', async () => {
+    class ImmediateWorker {
+      private listeners: ((e: { data: unknown }) => void)[] = []
+      addEventListener(_: string, l: (e: { data: unknown }) => void) { this.listeners.push(l) }
+      removeEventListener(_: string, l: (e: { data: unknown }) => void) {
+        const i = this.listeners.indexOf(l)
+        if (i >= 0) this.listeners.splice(i, 1)
+      }
+      postMessage(data: { id: number }) {
+        const ls = [...this.listeners]
+        ls.forEach(fn => fn({ data: { id: data.id, vector: [1, 0, 0] } }))
+      }
+      terminate() {}
+    }
+
+    vi.stubGlobal('Worker', ImmediateWorker)
     const onComplete = vi.fn()
-    const user = userEvent.setup()
     render(<TextModePanel onAnalysisComplete={onComplete} />)
-    await user.click(screen.getByRole('button', { name: 'Сбросить' }))
-    expect(onComplete).toHaveBeenCalledWith([])
+
+    fireEvent.change(
+      screen.getByPlaceholderText('Вставьте текст для анализа'),
+      { target: { value: 'This passage has more than twenty words to ensure it passes the minimum word threshold for segmentation.' } },
+    )
+    fireEvent.change(
+      screen.getByPlaceholderText('Целевое ключевое слово или промпт'),
+      { target: { value: 'keyword' } },
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Анализировать' }))
+
+    await waitFor(() =>
+      expect(onComplete).toHaveBeenCalledWith(
+        expect.arrayContaining([
+          expect.objectContaining({ text: expect.any(String), score: expect.any(Number) }),
+        ]),
+      ),
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Сбросить' }))
+    expect(onComplete).toHaveBeenLastCalledWith([])
   })
 
   it('clicking Сбросить re-disables the Анализировать button after fields were filled', async () => {

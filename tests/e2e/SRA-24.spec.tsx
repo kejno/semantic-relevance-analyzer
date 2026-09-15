@@ -3,29 +3,33 @@ import { render, screen, cleanup, fireEvent, act, waitFor } from '@testing-libra
 import { TextModePanel, type AnalysisResult } from '../../src/components/TextModePanel'
 
 describe('SRA-24: TextModePanel analysis happy path — loading state shown then results lifted to parent', () => {
+  let responseQueue: (() => void)[] = []
+
+  class PausedWorker {
+    private listeners: ((e: { data: unknown }) => void)[] = []
+    addEventListener(_: string, l: (e: { data: unknown }) => void) { this.listeners.push(l) }
+    removeEventListener(_: string, l: (e: { data: unknown }) => void) {
+      const i = this.listeners.indexOf(l)
+      if (i >= 0) this.listeners.splice(i, 1)
+    }
+    postMessage(data: { id: number }) {
+      const ls = [...this.listeners]
+      const { id } = data
+      responseQueue.push(() => ls.forEach(fn => fn({ data: { id, vector: [1, 0, 0] } })))
+    }
+    terminate() {}
+  }
+
+  beforeEach(() => {
+    responseQueue = []
+  })
+
   afterEach(() => {
     cleanup()
     vi.unstubAllGlobals()
   })
 
   it('transitions to loading state after clicking Анализировать', async () => {
-    const responseQueue: (() => void)[] = []
-
-    class PausedWorker {
-      private listeners: ((e: { data: unknown }) => void)[] = []
-      addEventListener(_: string, l: (e: { data: unknown }) => void) { this.listeners.push(l) }
-      removeEventListener(_: string, l: (e: { data: unknown }) => void) {
-        const i = this.listeners.indexOf(l)
-        if (i >= 0) this.listeners.splice(i, 1)
-      }
-      postMessage(data: { id: number }) {
-        const ls = [...this.listeners]
-        const { id } = data
-        responseQueue.push(() => ls.forEach(fn => fn({ data: { id, vector: [1, 0, 0] } })))
-      }
-      terminate() {}
-    }
-
     vi.stubGlobal('Worker', PausedWorker)
     render(<TextModePanel onAnalysisComplete={vi.fn()} />)
 
@@ -46,23 +50,6 @@ describe('SRA-24: TextModePanel analysis happy path — loading state shown then
   })
 
   it('calls onAnalysisComplete with results and removes loading indicator after Worker responds', async () => {
-    const responseQueue: (() => void)[] = []
-
-    class PausedWorker {
-      private listeners: ((e: { data: unknown }) => void)[] = []
-      addEventListener(_: string, l: (e: { data: unknown }) => void) { this.listeners.push(l) }
-      removeEventListener(_: string, l: (e: { data: unknown }) => void) {
-        const i = this.listeners.indexOf(l)
-        if (i >= 0) this.listeners.splice(i, 1)
-      }
-      postMessage(data: { id: number }) {
-        const ls = [...this.listeners]
-        const { id } = data
-        responseQueue.push(() => ls.forEach(fn => fn({ data: { id, vector: [1, 0, 0] } })))
-      }
-      terminate() {}
-    }
-
     vi.stubGlobal('Worker', PausedWorker)
 
     const onComplete = vi.fn()
@@ -145,7 +132,7 @@ describe('SRA-24: TextModePanel analysis happy path — loading state shown then
     }
   })
 
-  it('beforeEach: loading indicator is not shown before any interaction', () => {
+  it('loading indicator is not shown on initial render', () => {
     class ImmediateWorker {
       private listeners: ((e: { data: unknown }) => void)[] = []
       addEventListener(_: string, l: (e: { data: unknown }) => void) { this.listeners.push(l) }
